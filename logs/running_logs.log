@@ -23,3 +23,20 @@ NameError: name 'OPTIMIZER' is not defined
 [2023-04-17 00:09:06,009: INFO: common]: yaml file: configs/config.yaml loaded successfully
 [2023-04-17 00:09:06,551: INFO: 01_base_model_creation]: >>>>> stage CREATING BASE MODEL completed!<<<<<
 
+[2023-04-18 12:35:33,558: INFO: 01_base_model_creation]: 
+********************
+[2023-04-18 12:35:33,559: INFO: 01_base_model_creation]: >>>>> stage CREATING BASE MODEL started <<<<<
+[2023-04-18 12:35:33,562: INFO: common]: yaml file: configs/config.yaml loaded successfully
+[2023-04-18 12:36:38,944: INFO: common]: created directory at: artifacts\models
+[2023-04-18 12:36:39,022: INFO: 01_base_model_creation]: base model saved at artifacts\models\base_model.h5
+[2023-04-18 12:36:39,107: INFO: 01_base_model_creation]: >>>>> stage CREATING BASE MODEL completed!<<<<<
+
+[2023-04-18 12:37:29,769: INFO: 01_base_model_creation]: 
+********************
+[2023-04-18 12:37:29,769: INFO: 01_base_model_creation]: >>>>> stage CREATING BASE MODEL started <<<<<
+[2023-04-18 12:37:29,773: INFO: common]: yaml file: configs/config.yaml loaded successfully
+[2023-04-18 12:38:43,760: INFO: common]: created directory at: artifacts\models
+[2023-04-18 12:38:43,816: INFO: 01_base_model_creation]: base model saved at artifacts\models\base_model.h5
+[2023-04-18 12:38:44,730: INFO: 01_base_model_creation]: evaluation metrics [0.3105073571205139, 0.9121999740600586]
+[2023-04-18 12:38:44,775: INFO: 01_base_model_creation]: >>>>> stage CREATING BASE MODEL completed!<<<<<
+
