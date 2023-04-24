@@ -8,7 +8,7 @@ import tensorflow as tf
 import io
 
 
-STAGE = "CREATING BASE MODEL" ## <<< change stage name 
+STAGE = "TRANSFER LEARNING" ## <<< change stage name 
 
 logging.basicConfig(
     filename=os.path.join("logs", 'running_logs.log'), 
@@ -17,6 +17,11 @@ logging.basicConfig(
     filemode="a"
     )
 
+def update_even_odd_labels(list_of_labels):
+    for idx,label in enumerate(list_of_labels):
+        even_condition = label%2 == 0
+        list_of_labels[idx] = np.where(even_condition == 0,1,0)
+    return list_of_labels
 
 def main(config_path):
     ## read config files
@@ -29,29 +34,12 @@ def main(config_path):
     X_valid, X_train = X_train_full[:5000],X_train_full[5000:]
     y_valid,y_train = y_train_full[:5000],y_train_full[5000:]
 
+    y_train_bin,y_test_bin,y_valid_bin = update_even_odd_labels([y_train,y_test,y_valid])
+
     # set the seeds
     seed = 2021 ## get it from config
     tf.random.set_seed(seed)
     np.random.seed(seed)
-
-    ## define layers
-    LAYERS = [
-        tf.keras.layers.Flatten(input_shape = [28,28]),
-        tf.keras.layers.Dense(300,name='hiddenlayer1'),
-        tf.keras.layers.LeakyReLU(),
-        tf.keras.layers.Dense(100,name='hiddenlayer2'),
-        tf.keras.layers.LeakyReLU(),
-        tf.keras.layers.Dense(10,activation="softmax",name='outputlayer'),
-    ]
-
-    ## define the model & compile it
-    model = tf.keras.models.Sequential(LAYERS)
-
-    LOSS = "sparse_categorical_crossentropy"
-    OPTIMIZERS = tf.keras.optimizers.SGD(learning_rate=1e-3)
-    METRICS = ["accuracy"]
-
-    model.compile(loss=LOSS, optimizer=OPTIMIZERS,metrics=METRICS)
 
     ## log our summary information in logs
     def _log_model_summary(model):
@@ -59,22 +47,46 @@ def main(config_path):
             model.summary(print_fn = lambda x:stream.write(f"{x}\n"))
             summary_str = stream.getvalue()
         return summary_str
+    
+    ## load the base model-
+    base_model_path = os.path.join("artifacts","models","base_model.h5")
+    base_model = tf.keras.models.load_model(base_model_path)
+    logging.info(f"Model summary: \n{_log_model_summary(base_model)}")
 
-    # model.summary()
-    logging.info(f"{STAGE} model summary: \n{_log_model_summary(model)}")
-    ## Train the model
-    hostory = model.fit(X_train,y_train,epochs=10,validation_data = (X_valid,y_valid),
+    ## freeze the weights 
+    for layer in base_model.layers[: -1]: # all layers except the output layer(last layer)
+       print(f"trainable status of before{layer.name}: {layer.trainable}") 
+       layer.trainable = False
+       print(f"trainable status of {layer.name}: {layer.trainable}")
+
+    base_layer = base_model.layers[: -1]
+
+    # ## define the model & compile it
+    new_model = tf.keras.models.Sequential(base_layer)
+    new_model.add(
+        tf.keras.layers.Dense(2,activation="softmax",name = "outputlayer")
+    )
+
+    logging.info(f"{STAGE} model summary: \n{_log_model_summary(new_model)}")
+
+    LOSS = "sparse_categorical_crossentropy"
+    OPTIMIZERS = tf.keras.optimizers.SGD(learning_rate=1e-3)
+    METRICS = ["accuracy"]
+
+    new_model.compile(loss=LOSS, optimizer=OPTIMIZERS,metrics=METRICS)
+
+    
+    # ## Train the model
+    hostory = new_model.fit(X_train,y_train_bin,epochs=10,validation_data = (X_valid,y_valid_bin),
                         verbose=2)
     
     ## save the model
     model_dir_path = os.path.join("artifacts","models")
-    create_directories([model_dir_path])
-
-    model_file_path = os.path.join(model_dir_path,"base_model.h5")
-    model.save(model_file_path)
+    model_file_path = os.path.join(model_dir_path,"even_odd_model.h5")
+    new_model.save(model_file_path)
 
     logging.info(f"base model saved at {model_file_path}")
-    logging.info(f"evaluation metrics {model.evaluate(X_test,y_test)}")
+    logging.info(f"evaluation metrics {new_model.evaluate(X_test,y_test_bin)}")
 
 
 if __name__ == '__main__':
